@@ -195,7 +195,7 @@ def main():
     ]
 
     #TODO: Remove token and make it an arg
-    c = Census("fc66937306461fac65ad897de2055460013f5075")
+    c = Census("insert_key")
 
     results = defaultdict(list)
     query_census(key_pop_sum, 54, c, results)
