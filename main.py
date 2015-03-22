@@ -1,16 +1,60 @@
+"""
+script that makes nice csvs with data on a district level
+using then census data and api
+e.g.
+'',area01, area02 ...
+pop, 1234, 456789 ...
+...
+"""
+
+
 import sys
+from collections import defaultdict
+import csv
 
 from census import Census
 from us import states
 
 
+def query_census(thing, num_dists, c, results):
+    for k, v in thing.items():
+
+        for i in range(1, num_dists):
+            dist_id = str(i).zfill(2)
+            data = c.acs5.state_district(
+                ('NAME', k),
+                states.CA.fips,
+                dist_id
+            )
+
+            results[dist_id].append((v, data[0][k]))
+
+    return results
+
+
+def write_csv(filename, data):
+    csv_output = [['', ], ]
+    for i, (k, v) in enumerate(data.items()):
+        if i == 0:
+            csv_output[0].append(k)
+            for i, (thing, number) in enumerate(v):
+                csv_output.append([thing])
+                csv_output[i + 1].append(number)
+        else:
+            csv_output[0].append(k)
+            for j, (_, number) in enumerate(v):
+                csv_output[j + 1].append(number)
+
+    import pdb; pdb.set_trace()
+
+    with open(filename, 'wb') as w:
+        writer = csv.writer(w)
+        writer.writerows(csv_output)
+
+
 def main():
     """
     """
-    #TODO: Remove token and make it an arg
-    c = Census("inserttoken")
-
-
     key_pop_sum = {
         'B02001_001E': 'Total Population', 
         'B02001_002E': 'White',
@@ -118,54 +162,51 @@ def main():
     }
 
     less_high_school_edu_by_emp = {
-        'B23006_002E': 'Less than high school graduate:',
-        'B23006_003E': 'In labor force:',
-        'B23006_004E': 'In Armed Forces',
-        'B23006_005E': 'Civilian:',
-        'B23006_006E': 'Employed',
-        'B23006_007E': 'Unemployed',
-        'B23006_008E': 'Not in labor force',
+        'B23006_003E': 'Less than high school In labor force:',
+        'B23006_004E': 'Less than high school In Armed Forces',
+        'B23006_005E': 'Less than high school Civilian:',
+        'B23006_006E': 'Less than high school Employed',
+        'B23006_007E': 'Less than high school Unemployed',
+        'B23006_008E': 'Less than high school Not in labor force',
     }
 
-    high_scholl = {
-        'B23006_010E': 'In labor force:',
-        'B23006_011E': 'In Armed Forces',
-        'B23006_012E': 'Civilian:',
-        'B23006_013E': 'Employed',
-        'B23006_014E': 'Unemployed',
-        'B23006_015E': 'Not in labor force',
+    high_school = {
+        'B23006_010E': 'Finished high school In labor force:',
+        'B23006_011E': 'Finished high school In Armed Forces',
+        'B23006_012E': 'Finished high school Civilian:',
+        'B23006_013E': 'Finished high school Employed',
+        'B23006_014E': 'Finished high school Unemployed',
+        'B23006_015E': 'Finished high school Not in labor force',
     }
 
     college_degree = {
-        'B23006_016E': 'Some college or associates degree:',
-        'B23006_017E': 'In labor force:',
-        'B23006_018E': 'In Armed Forces',
-        'B23006_019E': 'Civilian:',
-        'B23006_020E': 'Employed',
-        'B23006_021E': 'Unemployed',
-        'B23006_022E': 'Not in labor force',
+        'B23006_017E': 'Some college or associates degree, In labor force:',
+        'B23006_018E': 'Some college or associates degree, In Armed Forces',
+        'B23006_019E': 'Some college or associates degree, Civilian:',
+        'B23006_020E': 'Some college or associates degree, Employed',
+        'B23006_021E': 'Some college or associates degree, Unemployed',
+        'B23006_022E': 'Some college or associates degree, Not in labor force',
     }
 
     bach_or_more = {
-        'B23006_023E': 'Bachelors degree or higher:',
-        'B23006_024E': 'In labor force:',
-        'B23006_025E': 'In Armed Forces',
-        'B23006_026E': 'Civilian:',
-        'B23006_027E': 'Employed',
-        'B23006_028E': 'Unemployed',
-        'B23006_029E': 'Not in labor force',
+        'B23006_024E': 'Bach or higher In labor force:',
+        'B23006_025E': 'Bach or higher In Armed Forces',
+        'B23006_026E': 'Bach or higher Civilian:',
+        'B23006_027E': 'Bach or higher Employed',
+        'B23006_028E': 'Bach or higher Unemployed',
+        'B23006_029E': 'Bach or higher Not in labor force',
     }
 
-    for k, v in edu_by_emp.items():
-        for i in range(1, 2):
-            data = c.acs5.state_district(
-                ('NAME', k),
-                states.CA.fips,
-                str(i).zfill(2)
-            )
+    #TODO: Remove token and make it an arg
+    c = Census("key")
 
-            print data
-            print data[0][k]
+    results = defaultdict(list)
+    query_census(bach_or_more, 54, c, results)
+    query_census(less_high_school_edu_by_emp, 54, c, results)
+    query_census(high_school, 54, c, results)
+    query_census(college_degree, 54, c, results)
+
+    write_csv('data.csv', results)
 
 
 if __name__ == '__main__':
