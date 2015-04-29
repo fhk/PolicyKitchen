@@ -16,18 +16,15 @@ from census import Census
 from us import states
 
 
-def query_census(thing, num_dists, c, results):
+def query_census(thing, c, results):
     for (k, v) in thing:
-
-        for i in range(12, 13):
-            dist_id = str(i).zfill(2)
-            data = c.acs5.state_district(
+        # no validation on query for state being a fip
+        for state in states.STATES:
+            data = c.acs5.state(
                 ('NAME', k),
-                states.CA.fips,
-                dist_id
+                state.fips
             )
-
-            results[dist_id].append((v, data[0][k]))
+            results[state].append((v, data[0][k]))
 
     return results
 
@@ -195,20 +192,20 @@ def main():
     ]
 
     #TODO: Remove token and make it an arg
-    c = Census("insert_key")
+    c = Census(sys.argv[1], year=2013)
 
     results = defaultdict(list)
-    query_census(key_pop_sum, 54, c, results)
-    query_census(key_med_age_by_pop, 54, c, results)
-    query_census(work_industry, 54, c, results)
-    query_census(bach_or_more, 54, c, results)
-    query_census(less_high_school_edu_by_emp, 54, c, results)
-    query_census(high_school, 54, c, results)
-    query_census(college_degree, 54, c, results)
-    query_census(income, 54, c, results)
-    query_census(education, 54, c, results)
+    query_census(key_pop_sum, c, results)
+    query_census(key_med_age_by_pop, c, results)
+    query_census(work_industry, c, results)
+    query_census(bach_or_more, c, results)
+    query_census(less_high_school_edu_by_emp, c, results)
+    query_census(high_school, c, results)
+    query_census(college_degree, c, results)
+    query_census(income, c, results)
+    query_census(education, c, results)
 
-    write_csv('data.csv', results)
+    write_csv('CENSUS_DG_2013.csv', results)
 
 
 if __name__ == '__main__':
